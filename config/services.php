@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook' => [
+            'secret' => env('STRIPE_WEBHOOK_SECRET'),
+            'tolerance' => env('STRIPE_WEBHOOK_TOLERANCE', 300),
+        ],
+    ],
+
+    'vnpay' => [
+        'vnp_TmnCode' => env('VNPAY_TMN_CODE', true),
+        'vnp_HashSecret' => env('VNPAY_HASH_SECRET'),
+        'vnp_Url' => env('VNPAY_API_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
+        'vnp_Returnurl' => env('VNPAY_RETURN_URL', 'http://localhost:8000/vnpay/return'),
+    ],
+
 ];

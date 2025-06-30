@@ -1,0 +1,23 @@
+FROM debian:bookworm-slim
+
+# Cài đặt các gói cần thiết
+RUN apt-get update && apt-get install -y \
+    cron \
+    certbot \
+    curl \
+    ca-certificates \
+    nginx \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy file crontab vào container
+COPY crontab /etc/cron.d/renew-cron
+
+# Cấp quyền chạy cho file crontab
+RUN chmod 0644 /etc/cron.d/renew-cron && \
+    crontab /etc/cron.d/renew-cron
+
+# Tạo thư mục log nếu cần
+RUN mkdir -p /var/log/cron
+
+# Lệnh khởi động
+CMD ["cron", "-f"]

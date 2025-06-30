@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  reverse-proxy:
+    image: traefik:v3.1
+    command:
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=you@example.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    labels:
+      - "traefik.enable=true"
+
+  laravel-backend:
+    image: your-laravel-image  # build từ Dockerfile Laravel hoặc image public
+    expose:
+      - "80"
+    labels:
+      - "traefik.enable=true"
+
+      # 🔐 Authenticated API router
+      - "traefik.http.routers.api-auth.rule=Host(`speciapi.fun`) && PathPrefix(`/api/secure`)"
+      - "traefik.http.routers.api-auth.entrypoints=websecure"
+      - "traefik.http.routers.api-auth.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-auth.middlewares=jwt-auth"
+      - "traefik.http.routers.api-auth.service=laravel-backend"
+
+      # 🌐 Public API router
+      - "traefik.http.routers.api-public.rule=Host(`speciapi.fun`) && (PathPrefix(`/api/public`) || PathPrefix(`/`))"
+      - "traefik.http.routers.api-public.entrypoints=websecure"
+      - "traefik.http.routers.api-public.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-public.service=laravel-backend"
+
+  auth-service:
+    image: your-auth-service  # Laravel hoặc app nào decode JWT
+    expose:
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.auth-service.loadbalancer.server.port=80"
+
+  # 📦 Middleware: JWT Auth
+    # Gắn vào api-auth router
+    # Middleware này sẽ forward request sang auth-service/validate
+    # Nếu hợp lệ: trả 200 + header; nếu sai: trả 401 JSON
+    labels:
+      - "traefik.http.middlewares.jwt-auth.forwardauth.address=http://auth-service/validate"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.jwt-auth.forwardauth.authResponseHeaders=X-User-Id,X-User-Role"
+
+networks:
+  default:
+    name: traefik-net

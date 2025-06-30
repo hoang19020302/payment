@@ -102,7 +102,6 @@ class PaymentController extends Controller
         $vnp_ReturnUrl = config('services.vnpay.vnp_Returnurl'); // URL nhận kết quả trả về
 
         // Lấy thông tin từ đơn hàng phục vụ thanh toán 
-        // Dưới đây là thông tin giả định, bạn có thể lấy thông tin đơn hàng của bạn  để thay thế
         $order = (object)[
             "code" => 'ORDER' . rand(100000, 999999),  // Mã đơn hàng
             "total" => $request->input('amount', 10000), // Số tiền cần thanh toán (VND)

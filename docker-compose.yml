@@ -18,3 +18,15 @@ services:
       - REDIS_PORT=6379
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      
+  beanstalkd:
+    image: schickling/beanstalkd
+    ports:
+      - "11300:11300"
+  
+  beanstalkd-console:
+    image: schickling/beanstalkd-console
+    ports:
+      - "2080:2080"
+    depends_on:
+      - beanstalkd

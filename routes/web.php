@@ -24,10 +24,18 @@ Route::middleware('ngrok.https')->group(function () {
     })->middleware('auth');
 
     Route::get('/broadcast', function () {
-        \Log::info(auth()->user());
-        event(new \App\Events\MessageSent('Hello private from backend', auth()->id()));
-        return 'Sent!';
-    });
+        return view('broadcast');
+    })->middleware('auth')->name('broadcast');
+
+    Route::post('/broadcast', function (Request $request) {
+        $msg = $request->input('msg');
+        $message = [
+            'content' => 'Hello private from backend: ' . $msg,
+            'timestamp' => now(),
+        ];
+        event(new \App\Events\MessageSent($message, auth()->id()));
+        return redirect()->back()->with('success', 'Message sent successfully!');
+    })->name('broadcast.send');
 
     Route::get('/payment', [PaymentController::class, 'showPaymentPage'])->name('payment.page');
 

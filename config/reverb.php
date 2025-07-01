@@ -54,6 +54,11 @@ return [
             'telescope_ingest_interval' => env('REVERB_TELESCOPE_INGEST_INTERVAL', 15),
         ],
 
+        'webhook' => [
+            'enabled' => true,
+            'url' => env('REVERB_WEBHOOK_URL', 'http://172.23.181.101:8000/api/reverb-webhook'),
+            'secret' => env('REVERB_WEBHOOK_SECRET', 'your-secret'),
+        ],
     ],
 
     /*

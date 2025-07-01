@@ -1,0 +1,26 @@
+use App\Helpers\Presence;
+
+// Tham gia channel
+Presence::join('chat-room', [
+    'id' => auth()->id(),
+    'name' => auth()->user()->name,
+]);
+
+// Rời khỏi channel
+Presence::leave('chat-room', auth()->id());
+
+// Lấy danh sách user trong channel
+$members = Presence::all('chat-room');
+
+// Đếm số user
+$count = Presence::count('chat-room');
+
+// Xoá sạch channel
+Presence::clear('chat-room');
+
+
+# Xem tất cả user trong channel
+HGETALL presence:chat-room:members
+
+# Đếm số user
+HLEN presence:chat-room:members

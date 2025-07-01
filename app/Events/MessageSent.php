@@ -4,6 +4,7 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -16,10 +17,10 @@ class MessageSent implements ShouldBroadcast, ShouldQueue
     /**
      * Create a new event instance.
      */
-    public string $message;
+    public array $message;
     public int $userId;
 
-    public function __construct(string $message, int $userId)
+    public function __construct(array $message, int $userId)
     {
         //
         $this->message = $message;
@@ -34,9 +35,11 @@ class MessageSent implements ShouldBroadcast, ShouldQueue
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('App.Models.User.' . $this->userId)
+            new PresenceChannel('chat-room')
         ];
     }
+    public $connection = 'redis';
+    
     public function broadcastAs(): string
     {
         return 'MessageSent';

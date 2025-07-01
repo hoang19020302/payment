@@ -13,6 +13,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.6",
+        "pda/pheanstalk": "^7.0",
         "srmklive/paypal": "^3.0",
         "stripe/stripe-php": "^17.3"
     },

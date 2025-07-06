@@ -24,3 +24,79 @@ HGETALL presence:chat-room:members
 
 # Đếm số user
 HLEN presence:chat-room:members
+ ==========================================================
+ // Gán giá trị
+Redis::set('key', 'value');
+
+// Lấy giá trị
+$value = Redis::get('key');
+
+// Xóa key
+Redis::del('key');
+
+// Gán giá trị vào field của hash
+Redis::hset('users', '1', json_encode(['name' => 'Hoang']));
+
+// Lấy giá trị theo field
+$user = Redis::hget('users', '1');
+
+// Lấy toàn bộ field + value
+$allUsers = Redis::hgetall('users');
+
+// Xoá field
+Redis::hdel('users', '1');
+
+// Thêm vào set
+Redis::sadd('online-users', 123);
+
+// Kiểm tra tồn tại
+$isOnline = Redis::sismember('online-users', 123);
+
+// Lấy tất cả
+$all = Redis::smembers('online-users');
+
+// Xoá khỏi set
+Redis::srem('online-users', 123);
+
+// Đẩy vào đầu danh sách
+Redis::lpush('tasks', 'task1');
+
+// Đẩy vào cuối danh sách
+Redis::rpush('tasks', 'task2');
+
+// Lấy phần tử đầu
+$task = Redis::lpop('tasks');
+
+// Lấy phần tử cuối
+$task = Redis::rpop('tasks');
+
+// Gán key tự hết hạn sau 1 phút
+Redis::setex('temp_key', 60, 'hello');
+
+// Hoặc dùng expire sau khi đã set
+Redis::set('temp_key', 'hello');
+Redis::expire('temp_key', 60);
+
+// Tăng
+Redis::incr('views');
+
+// Tăng theo số
+Redis::incrby('views', 10);
+
+// Giảm
+Redis::decr('views');
+
+// Lấy tất cả key (chỉ dùng khi ít key, không khuyên dùng production)
+Redis::keys('*');
+
+// Tìm theo pattern
+Redis::keys('online-users:*');
+
+if (Redis::setnx('lock:job', now()->timestamp)) {
+    Redis::expire('lock:job', 30); // lock 30 giây
+
+    // ... chạy job
+
+    Redis::del('lock:job');
+}
+

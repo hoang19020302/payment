@@ -60,6 +60,15 @@ class PresenceService
     }
 
     /**
+     * Xoá 1 user trong channel
+     */
+    public function delete(string $channel, int|string $userId): void
+    {
+        $key = $this->key($channel);
+        Redis::hdel($key, (string) $userId);
+    }
+
+    /**
      * Xoá toàn bộ channel
      */
     public function clear(string $channel): void
@@ -68,7 +77,7 @@ class PresenceService
     }
 
     /**
-     * Sync lại toàn bộ user
+     * Đồng bộ lại toàn bộ user
      */
     public function sync(string $channel, array $users): void
     {

@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "doctrine/dbal": "^4.2",
         "laravel/framework": "^11.31",
         "laravel/octane": "^2.10",
         "laravel/reverb": "^1.5",
@@ -14,6 +15,7 @@
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.6",
         "pda/pheanstalk": "^7.0",
+        "spiral/roadrunner-http": "^3.3.0",
         "srmklive/paypal": "^3.0",
         "stripe/stripe-php": "^17.3"
     },

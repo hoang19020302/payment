@@ -1,0 +1,58 @@
+# Stage 1: Build app with Composer, extensions
+FROM php:8.3-cli AS build
+
+WORKDIR /var/www
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    unzip git curl libzip-dev libpq-dev libonig-dev libxml2-dev libpng-dev \
+    libjpeg-dev libfreetype6-dev libssl-dev zip \
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip sockets mbstring exif pcntl bcmath gd
+
+# Cài PHP Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy app source
+COPY . .
+
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev
+
+# Build stage output: only app + vendor
+RUN mkdir -p /app
+RUN cp -r . /app
+
+# ----------------------------------------------------------
+# Stage 2: Runtime-only (không có build tool, gọn nhẹ)
+FROM php:8.3-cli
+
+WORKDIR /var/www
+
+# Install PHP extensions only (no dev tools)
+RUN apt-get update && apt-get install -y \
+    libzip-dev libpq-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev libssl-dev \
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip sockets mbstring exif pcntl bcmath gd \
+    && pecl install redis && docker-php-ext-enable redis \
+    && apt-get remove -y gcc g++ make autoconf \
+    && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Cấu hình php.ini
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY php-custom.ini "$PHP_INI_DIR/conf.d/99-php-custom.ini"
+
+# Cài rr binary
+RUN curl -Ls https://github.com/roadrunner-server/roadrunner/releases/download/v2025.1.2/roadrunner-2025.1.2-linux-amd64.tar.gz \
+    | tar -xz -C /usr/local/bin/rr && chmod +x /usr/local/bin/rr
+
+# Copy ứng dụng từ stage build
+COPY --from=build /app /var/www
+
+# Laravel permissions
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+EXPOSE 8000
+
+CMD ["php", "artisan", "octane:start", "--server=roadrunner"]

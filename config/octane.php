@@ -40,6 +40,22 @@ return [
 
     'server' => env('OCTANE_SERVER', 'roadrunner'),
 
+    'swoole' => [
+        'host' => env('OCTANE_SWOOLE_HOST', '127.0.0.1'),
+        'port' => env('OCTANE_SWOOLE_PORT', '8000'),
+        'options' => [
+            'worker_num' => env('SWOOLE_WORKER_NUM', swoole_cpu_num()),
+            'task_worker_num' => 2,
+            'max_request' => 1000,
+            'reload_async' => true,
+            'enable_coroutine' => true,
+            'hook_flags' => SWOOLE_HOOK_ALL,
+            'open_tcp_nodelay' => true,
+            'max_coroutine' => 100000,
+            //'http2' => false,
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Force HTTPS
@@ -135,7 +151,7 @@ return [
     ],
 
     'flush' => [
-        //
+        // \App\Services\MyService::class,
     ],
 
     /*
@@ -220,5 +236,4 @@ return [
     */
 
     'max_execution_time' => 30,
-
 ];

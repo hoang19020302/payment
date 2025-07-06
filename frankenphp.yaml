@@ -1,0 +1,23 @@
+# frankenphp.yaml
+
+workers: 4
+
+preload: bootstrap/cache/packages.php
+
+auto_https: off
+
+listen:
+  - ":8000"
+
+static:
+  root: public
+  index: index.php
+
+gzip: true
+
+headers:
+  X-Powered-By: "FrankenPHP"
+  X-Frame-Options: "SAMEORIGIN"
+
+log:
+  level: info

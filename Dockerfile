@@ -49,6 +49,8 @@ RUN [ ! -f .env ] && cp .env.example .env || true
 # Cài composer
 RUN composer install --no-dev --optimize-autoloader || true
 
+RUN chmod -R 775 storage bootstrap/cache
+
 # Cài Octane và cache cấu hình (nếu chưa chạy)
 RUN php artisan octane:install --server=swoole || true
 RUN php artisan config:cache || true

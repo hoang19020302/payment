@@ -1,0 +1,69 @@
+# Stage 1: Build environment (cài ext, swoole, composer)
+FROM php:8.3-cli AS build
+
+WORKDIR /var/www
+
+# Cài các thư viện để build swoole và Laravel
+RUN apt-get update && apt-get install -y \
+    git unzip curl zip libzip-dev libpng-dev libxml2-dev \
+    libcurl4-openssl-dev libssl-dev pkg-config libpq-dev \
+    libonig-dev libbrotli-dev build-essential \
+    && docker-php-ext-install pdo_mysql pdo_pgsql zip sockets mbstring exif pcntl bcmath gd \
+    && pecl install redis && docker-php-ext-enable redis
+
+# Build Swoole từ source
+RUN git clone https://github.com/swoole/swoole-src.git /usr/src/swoole && \
+    cd /usr/src/swoole && \
+    phpize && \
+    ./configure --enable-sockets --enable-openssl --enable-mysqlnd --enable-swoole-curl --enable-brotli --enable-swoole-pgsql && \
+    make -j"$(nproc)" && make install && \
+    echo "extension=swoole.so" > /usr/local/etc/php/conf.d/swoole.ini && \
+    rm -rf /usr/src/swoole
+
+# Copy composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy toàn bộ project
+COPY . .
+
+# Cài dependency Laravel
+RUN composer install --no-dev --optimize-autoloader
+
+# Tạo .env nếu chưa có
+RUN [ -f .env ] || cp .env.example .env
+
+# Set permission
+RUN chmod -R 775 storage bootstrap/cache
+
+# Cache config/route, setup Octane
+RUN php artisan octane:install --server=swoole || true
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
+
+# Stage 2: Runtime (nhẹ hơn)
+FROM php:8.3-cli
+
+WORKDIR /var/www
+
+# Cài runtime deps để chạy swoole và extensions
+RUN apt-get update && apt-get install -y \
+    libzip-dev libpng-dev libxml2-dev libssl-dev libpq-dev libonig-dev libbrotli-dev \
+    && docker-php-ext-install pdo_mysql pdo_pgsql zip sockets mbstring exif pcntl bcmath gd \
+    && pecl install redis && docker-php-ext-enable redis \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy swoole extension đã build
+COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=build /usr/local/etc/php/conf.d/swoole.ini /usr/local/etc/php/conf.d/swoole.ini
+
+# Copy mã nguồn Laravel đã cài xong
+COPY --from=build /var/www /var/www
+
+# Cấu hình php.ini
+COPY php-custom.ini "$PHP_INI_DIR/conf.d/99-php-custom.ini"
+
+# Expose Octane port
+EXPOSE 8000
+
+# Chạy Laravel Octane
+CMD ["php", "artisan", "octane:start", "--server=swoole"]

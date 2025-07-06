@@ -1,0 +1,67 @@
+===============================Swoole=================================
+'options' => [
+    'worker_num' => swoole_cpu_num(),
+    'task_worker_num' => 2,
+    'max_request' => 1000,
+    'reload_async' => true,
+    'enable_coroutine' => true, // Bắt buộc để dùng các async như curl, pgsql
+    'hook_flags' => SWOOLE_HOOK_ALL, // Hook toàn bộ hàm blocking như file_get_contents, curl, stream
+    'open_tcp_nodelay' => true,
+    'max_coroutine' => 100000,
+    'http2' => false,
+],
+================================RoadRunner====================================================
+/ RoadRunner
+    'rpc' => ['listen' => 'tcp://127.0.0.1:6001'],
+    'http' => [
+        'address' => '0.0.0.0:8000',
+        'pool' => ['num_workers' => 8, 'max_jobs' => 1000],
+        'static' => ['dir' => 'public', 'forbid' => [".htaccess", ".env"]]
+    ],
+    'relay' => 'pipes',
+    'timeout' => 30,
+    'log_level' => 'info',
+===============================FrankenPHP====================================
+
+CMD ["php", "artisan", "octane:frankenphp",
+     "--host=0.0.0.0",
+     "--port=8000",
+     "--workers=8",
+     "--max-requests=2000",
+     "--log-level=warn"]
+
+
+# .rr.yaml
+
+version: "3"
+
+rpc:
+  listen: tcp://127.0.0.1:6001
+
+http:
+  address: 0.0.0.0:8000
+  pool:
+    num_workers: 8
+    max_jobs: 1000
+  static:
+    dir: "public"
+    forbid: [".htaccess", ".env"]
+  middleware: ["headers"]
+
+# Optional headers middleware
+headers:
+  response:
+    X-Powered-By: "Laravel Octane + RoadRunner"
+
+relay: "pipes"
+timeout: 30
+log_level: "info"
+
+server:
+  command: "php worker.php"
+
+# Để Laravel Octane chạy dưới dạng RoadRunner
+autoload:
+  psr4:
+    App\\: "app"
+

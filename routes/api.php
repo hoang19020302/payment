@@ -100,3 +100,36 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 });
+
+Route::post('/unban/{id}', function ($id) {
+    $user = User::findOrFail($id);
+
+    // ❌ Xoá flag trong Redis
+    Redis::del('banned:user:' . $id);
+
+    // Set flag trong Redis
+// Redis::set('banned:user:' . $id, 1);
+
+// // (Optional) Cập nhật DB
+// User::where('id', $id)->update(['is_banned' => true]);
+
+// broadcast(new ForceDisconnect($id));
+//Redis::setex('banned:user:' . $id, 3600, 1); // Ban 1 giờ
+
+    // ✅ Update DB 
+    $user->is_banned = false;
+    $user->save();
+
+    // 🔥 Thông báo cho client
+    broadcast(new Unbanned($id));
+
+    return response()->json(['message' => 'User unbanned']);
+});
+
+// Health check
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'Ok',
+        'hostname' => gethostname(),
+    ], 200);
+});

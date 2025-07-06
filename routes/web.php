@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\PaymentController;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 use App\Models\User;
 use Stripe\Stripe;
 use Stripe\Charge;
@@ -10,11 +13,18 @@ use Stripe\Charge;
 Route::middleware('ngrok.https')->group(function () {
     Route::get('/', function () {
         return view('home');
+    })->name('home');
+
+    Route::get('/fake-login-one', function () {
+        // Đăng nhập user 1 đầu tiên (tạo user 1 nếu chưa có)
+        $user = User::where('name', 'Test User 1')->first() ?? User::factory()->create(['name' => 'Test User 1']);
+        Auth::login($user);
+        return redirect('/private');
     });
 
-    Route::get('/fake-login', function () {
-        // Đăng nhập user đầu tiên (tạo user nếu chưa có)
-        $user = User::first() ?? User::factory()->create(['name' => 'Test User']);
+    Route::get('/fake-login-two', function () {
+        // Đăng nhập user 2 đầu tiên (tạo user 1 nếu chưa có)
+        $user = User::where('name', 'Test User 2')->first() ?? User::factory()->create(['name' => 'Test User 2']);
         Auth::login($user);
         return redirect('/private');
     });
@@ -70,3 +80,37 @@ Route::middleware('ngrok.https')->group(function () {
         return redirect()->back()->with('success', 'Test charge created successfully!');
     })->name('stripe.fund.test');
 });
+
+Route::get('/test-session', function () {
+    // Set 1 giá trị vào session
+    Session::put('user_name', 'Hoang');
+
+    return response()->json([
+        'session_id' => Session::getId(),
+        'user_name' => Session::get('user_name'),
+    ]);
+});
+
+Route::get('/test-cache', function () {
+    // Set 1 giá trị vào cache
+    Cache::put('user_name', 'Hoang');
+    Cache::put('user_id', 1);
+    return response()->json([
+        'session_id' => Cache::get('user_name'),
+        'user_name' => Cache::get('user_id'),
+    ]);
+});
+
+Route::get('/test-redis', function () {
+    // Set 1 giá trị vào redis
+    Redis::hset('user_name', 1, 'Hoang');
+    Redis::hset('email', 1, 'ZaUWu@example.com');
+    return response()->json([
+        'session_id' => Redis::hget('email', 1),
+        'user_name' => Redis::hget('user_name', 1),
+    ]);
+});
+
+Route::get('/login', function () {
+    return redirect()->route('home');
+})->name('login');

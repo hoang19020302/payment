@@ -1,0 +1,46 @@
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+use Illuminate\Http\Request as LaravelRequest;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Spiral\RoadRunner\Worker;
+use Spiral\RoadRunner\Http\PSR7Worker;
+use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
+use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
+
+$app = require __DIR__ . '/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+$psrFactory = new Psr17Factory();
+$httpFoundationFactory = new HttpFoundationFactory();
+$psrHttpFactory = new PsrHttpFactory($psrFactory, $psrFactory, $psrFactory, $psrFactory);
+
+$worker = new PSR7Worker(
+    Worker::create(),
+    $psrFactory,
+    $psrFactory,
+    $psrFactory
+);
+
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+
+while ($req = $worker->waitRequest()) {
+    try {
+        // Convert PSR-7 request → Symfony → Laravel
+        $symfonyRequest = $httpFoundationFactory->createRequest($req);
+        $laravelRequest = LaravelRequest::createFromBase($symfonyRequest);
+
+        // Handle request by Laravel
+        $laravelResponse = $kernel->handle($laravelRequest);
+
+        // Convert Laravel response → PSR-7 response
+        $psrResponse = $psrHttpFactory->createResponse($laravelResponse);
+
+        $worker->respond($psrResponse);
+        $kernel->terminate($laravelRequest, $laravelResponse);
+
+    } catch (\Throwable $e) {
+        $worker->getWorker()->error((string) $e);
+    }
+}

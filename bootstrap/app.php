@@ -19,12 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ngrok.https' => \App\Http\Middleware\UpgradeToHttpsUnderNgrok::class,
             'brotli.compress' => \App\Http\Middleware\CompressBrotliResponse::class,
+            'auth' => \App\Http\Middleware\Authenticate::class
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
         // Schedule commands here
-        $schedule->command('about')->everyMinute()->appendOutputTo(storage_path('logs/schedule-output.log'));
-        $schedule->command('test:scheduler')->everyFiveMinutes()->appendOutputTo(storage_path('logs/schedule-output.log'));
+        //$schedule->command('about')->everyMinute()->appendOutputTo(storage_path('logs/schedule-output.log'));
+        //$schedule->command('test:scheduler')->everyFiveMinutes()->appendOutputTo(storage_path('logs/schedule-output.log'));
+        $schedule->command('socket:check-timeouts')->everyMinute()->appendOutputTo(storage_path('logs/schedule-output.log'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Register custom exception handlers

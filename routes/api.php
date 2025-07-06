@@ -126,6 +126,10 @@ Route::post('/unban/{id}', function ($id) {
     return response()->json(['message' => 'User unbanned']);
 });
 
+Route::get('/swoole-config', function () {
+    return response()->json(config('octane.swoole.options'));
+});
+
 // Health check
 Route::get('/health', function () {
     return response()->json([

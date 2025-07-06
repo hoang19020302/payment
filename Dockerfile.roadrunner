@@ -45,7 +45,8 @@ COPY php-custom.ini "$PHP_INI_DIR/conf.d/99-php-custom.ini"
 
 # Cài rr binary
 RUN curl -Ls https://github.com/roadrunner-server/roadrunner/releases/download/v2025.1.2/roadrunner-2025.1.2-linux-amd64.tar.gz \
-    | tar -xz -C /usr/local/bin/rr && chmod +x /usr/local/bin/rr
+    | tar -xz --strip-components=1 --wildcards -C /usr/local/bin '*/rr' \
+    && chmod +x /usr/local/bin/rr
 
 # Copy ứng dụng từ stage build
 COPY --from=build /app /var/www
